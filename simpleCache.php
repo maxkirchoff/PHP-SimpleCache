@@ -15,15 +15,15 @@ class SimpleCache {
 
 	//Length of time to cache a file in seconds (if one is not specified)
 	var $cache_time = 3600;
-	
+
 	//This is just a functionality wrapper function
 	function get_data($label, $url, $cache_time = NULL)
 	{
-		if (is_null($cache_time)){
-			$cache_time = $this->cache_time;
+		if (is_int($cache_time)){
+			$this->cache_time = $cache_time;
 		}
 
-		if($data = $this->get_cache($label, $cache_time)){
+		if($data = $this->get_cache($label)){
 			return $data;
 		} else {
 			$data = $this->do_curl($url);
@@ -34,6 +34,11 @@ class SimpleCache {
 	
 	function set_cache($label, $data)
 	{
+		// If our path doesn't exist we need to make it
+		if (!file_exists($this->cache_path)){
+			mkdir($this->cache_path);
+		}
+
 		file_put_contents($this->cache_path . $this->safe_filename($label) .'.cache', $data);
 	}
 	
@@ -48,11 +53,11 @@ class SimpleCache {
 		return false;
 	}
 	
-	function is_cached($label, $cache_time)
+	function is_cached($label)
 	{
 		$filename = $this->cache_path . $this->safe_filename($label) .'.cache';
 		
-		if(file_exists($filename) && (filemtime($filename) + $cache_time >= time()))
+		if(file_exists($filename) && (filemtime($filename) + $this->cache_time >= time()))
 		{
 			return true;
 		}
